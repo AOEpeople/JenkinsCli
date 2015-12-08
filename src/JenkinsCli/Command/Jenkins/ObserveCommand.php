@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ObserveCommand extends Command
+class ObserveCommand extends AbstractCommand
 {
 
     protected function configure()
@@ -20,55 +20,26 @@ class ObserveCommand extends Command
             ->setName('jenkins:observe')
             ->setDescription('Observe build')
             ->addArgument(
+                'job',
+                InputArgument::REQUIRED,
+                'job'
+            )
+            ->addArgument(
                 'build',
-                InputArgument::OPTIONAL,
+                InputArgument::REQUIRED,
                 'build'
             );
     }
 
+    protected function interact(InputInterface $input, OutputInterface $output) {
+         $this->interactAskForJob($input, $output);
+        // TODO: get history for given job (if build is not set)
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
-        $build = $input->getArgument('build');
-        if (empty($build)) {
-            $build = 'lastBuild';
-        }
-
-        if (is_readable(getcwd() . DIRECTORY_SEPARATOR . '.env.jenkins')) {
-            $dotenv = new \Dotenv\Dotenv(getcwd(), '.env.jenkins');
-            $dotenv->load();
-        }
-
-
-        $userId = getenv('JENKINS_USERID');
-        $apiToken = getenv('JENKINS_APITOKEN');
-        if (empty($userId)) {
-            throw new \Exception('JENKINS_USERID not found');
-        }
-        if (empty($apiToken)) {
-            throw new \Exception('JENKINS_APITOKEN not found');
-        }
-
-        $context = stream_context_create(array('http' => array('header'  => "Authorization: Basic " . base64_encode("$userId:$apiToken"))));
-
-        $result = null;
-
-        Poller::poll(
-            function () use ($url, $context, $output, &$result) {
-                $json = file_get_contents($url, false, $context);
-                $result = json_decode($json, true);
-                if ($result['building']) {
-                    $output->write('.');
-                }
-                return (!$result['building']);
-            },
-            5,
-            20
-        );
-
-        $output->writeln("\n". 'Build: '. $result['id']);
-        $output->writeln('Status: '. $result['result']);
-
+        throw new \Exception('Not implemented yet');
     }
+
 
 }

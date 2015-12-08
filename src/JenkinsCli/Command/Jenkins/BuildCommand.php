@@ -2,6 +2,7 @@
 
 namespace JenkinsCli\Command\Jenkins;
 
+use JenkinsCli\Api;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Helper\Table;
@@ -9,8 +10,9 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
 
-class BuildCommand extends Command
+class BuildCommand extends AbstractCommand
 {
 
     protected function configure()
@@ -22,57 +24,32 @@ class BuildCommand extends Command
                 'job',
                 InputArgument::REQUIRED,
                 'job'
+            )
+            ->addOption(
+                'parameter',
+                'p',
+                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL,
+                'parameter (name=value)'
             );
+    }
+
+    protected function interact(InputInterface $input, OutputInterface $output) {
+        return $this->interactAskForJob($input, $output);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $parameters = $input->getOption('parameter');
+        $p = [];
+        foreach ($parameters as $parameter) {
+            list($name, $value) = explode('=', $parameter);
+            $p[$name] = $value;
+        }
 
         $job = $input->getArgument('job');
-
-        $branch = $input->getArgument('branch');
-        $userId = getenv('JENKINS_USERID');
-        $apiToken = getenv('JENKINS_APITOKEN');
-        if (empty($userId)) {
-            throw new \Exception('JENKINS_USERID not found');
-        }
-        if (empty($apiToken)) {
-            throw new \Exception('JENKINS_APITOKEN not found');
-        }
-        if (empty($url)) {
-            throw new \Exception('JENKINS_URL not found');
-        }
-
-        $url .= "$job/build/";
-
-        //$data = ['parameter' => [
-        //    ['name' => 'BRANCH_TO_BUILD', 'value' => $branch],
-        //    ['name' => 'skipBuildGrunt', 'value' => '1']
-        //]];
-
-        $ch = curl_init();
-
-        // $query = "json='".json_encode($data)."'";
-        // $command = "curl -k -X POST $url --user $userId:$apiToken --data-urlencode $query";
-        // echo $command;
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_USERPWD, "$userId:$apiToken");
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER , true);
-        // curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, array('json' => json_encode($data)));
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-        if (strpos($response, 'HTTP/1.1 201 Created') !== false) {
-            $output->writeln('Job triggered successfully');
-        } else {
-            $output->writeln($response);
-        }
+        $api = new Api();
+        $res = $api->build($job, $p);
+        var_dump($res);
     }
 
 }

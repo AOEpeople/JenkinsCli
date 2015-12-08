@@ -10,9 +10,9 @@ require_once $autoloader;
 
 use Symfony\Component\Console\Application;
 
-$app = new Application('AwsInspector', '@package_version@');
+$app = new Application('JenkinsCli', '@package_version@');
 
-foreach (\AwsInspector\CommandRegistry::getCommands() as $command) {
+foreach (\JenkinsCli\CommandRegistry::getCommands() as $command) {
     $app->add($command);
 }
 
