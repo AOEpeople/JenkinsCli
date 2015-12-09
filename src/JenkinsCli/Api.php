@@ -6,15 +6,22 @@ class Api {
 
     CONST suffix = '/api/json';
 
+    public function info($job, $build) {
+        if (!is_numeric($build) && !in_array($build, ['lastBuild', 'lastSuccessfulBuild'])) {
+            throw new \InvalidArgumentException('Invalid build');
+        }
+        return $this->get("/job/$job/$build");
+    }
+
+    public function getBuildInfo($job) {
+        return $this->get("/job/$job");
+    }
+
     public function build($jobName, array $parameters=[]) {
         $data = ['parameter' => []];
         foreach ($parameters as $name => $value) {
             $data['parameter'][] = ['name' => $name, "value" => $value];
         }
-        //$data = ['parameter' => [
-        //    ['name' => 'BRANCH_TO_BUILD', 'value' => $branch],
-        //    ['name' => 'skipBuildGrunt', 'value' => '1']
-        //]];
         return $this->post("/job/$jobName/build", ['json' => json_encode($data)]);
     }
 
@@ -48,12 +55,15 @@ class Api {
         return $response;
     }
 
-    protected function get($url)
+    protected function get($url, $suffix=null)
     {
+        if (is_null($suffix)) {
+            $suffix = self::suffix;
+        }
         $userId = $this->getUser();
         $apiToken = $this->getApiToken();
         $context = stream_context_create(array('http' => array('header' => "Authorization: Basic " . base64_encode("$userId:$apiToken"))));
-        $json = file_get_contents($this->getBaseUrl() . $url . self::suffix, false, $context);
+        $json = file_get_contents($this->getBaseUrl() . $url . $suffix, false, $context);
         $result = json_decode($json, true);
         return $result;
     }
