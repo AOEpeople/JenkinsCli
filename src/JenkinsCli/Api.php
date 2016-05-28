@@ -86,9 +86,9 @@ class Api {
     }
 
     protected function getBaseUrl() {
-        $url = getenv('JENKINS_BASURL');
+        $url = getenv('JENKINS_BASEURL');
         if (empty($url)) {
-            throw new \Exception('JENKINS_BASURL not found');
+            throw new \Exception('JENKINS_BASEURL not found');
         }
         return rtrim($url, '/');
     }
