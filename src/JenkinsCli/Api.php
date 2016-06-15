@@ -62,8 +62,16 @@ class Api {
         }
         $userId = $this->getUser();
         $apiToken = $this->getApiToken();
-        $context = stream_context_create(array('http' => array('header' => "Authorization: Basic " . base64_encode("$userId:$apiToken"))));
-        $json = file_get_contents($this->getBaseUrl() . $url . $suffix, false, $context);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: Basic " . base64_encode("$userId:$apiToken")));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_URL, $this->getBaseUrl() . $url . $suffix);
+        $json = curl_exec($ch);
+        curl_close($ch);
+
         $result = json_decode($json, true);
         return $result;
     }
